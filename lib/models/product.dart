@@ -165,7 +165,8 @@ final _sonyProducts = [
   Product(
     id: 'p12', name: 'Bravia 8 OLED 55"', badge: 'SALE',
     description: 'XR OLED Contrast Pro, Acoustic Surface Audio+, Google TV.',
-    price: 1799.00, originalPrice: 2499.00,
+    price: 1799.00, originalPrice
+      : 2499.00,
     imageUrl: 'https://images.unsplash.com/photo-1593359677879-a4bb92f4834e?w=400',
     rating: 4.6, reviewCount: 441,
     specs: [ProductSpec('Panel', 'OLED'), ProductSpec('Size', '55"'), ProductSpec('OS', 'Google TV')],
@@ -178,7 +179,7 @@ final List<TechStore> techStores = [
   TechStore(
     id: 's1', name: 'Apple Premium Store',
     address: '1 Infinite Loop, Cupertino, CA',
-    imageUrl: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800',
+    imageUrl: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800',
     rating: 4.9, category: 'Apple Authorized',
     deliveryTime: '1-2 days', deliveryFee: 0.00,
     attributes: 'Official Apple Reseller  •  Free Returns  •  AppleCare+',
