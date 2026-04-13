@@ -44,11 +44,15 @@ class _StoreLandscapeCardState extends State<StoreLandscapeCard> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(widget.store.imageUrl, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: TechColors.surfaceHigh,
-                child: const Icon(Icons.store, color: TechColors.textMuted, size: 48),
-              ),
+            Image.asset(
+              widget.store.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: TechColors.surfaceHigh,
+                  child: const Icon(Icons.store, color: Colors.white),
+                );
+              },
             ),
             // Gradient overlay
             Container(

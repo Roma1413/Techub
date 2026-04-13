@@ -28,30 +28,44 @@ class ProductItem extends StatelessWidget {
     return ClipRRect(
       borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
       child: SizedBox(
-        width: 90, height: 90,
+        width: 90,
+        height: 90,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(product.imageUrl, fit: BoxFit.cover,
+            Image.asset(
+              product.imageUrl,
+              fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: TechColors.surfaceHigh,
-                child: const Icon(Icons.devices, color: TechColors.textMuted),
+                child: const Icon(
+                  Icons.devices,
+                  color: TechColors.textMuted,
+                ),
               ),
             ),
+
             if (product.badge.isNotEmpty)
               Positioned(
-                top: 4, left: 4,
+                top: 4,
+                left: 4,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    color: product.badge == 'SALE' ? TechColors.success
-                        : product.badge == 'HOT' ? Colors.orange
+                    color: product.badge == 'SALE'
+                        ? TechColors.success
+                        : product.badge == 'HOT'
+                        ? Colors.orange
                         : TechColors.accent,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(product.badge,
-                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
-                      color: TechColors.background),
+                  child: Text(
+                    product.badge,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: TechColors.background,
+                    ),
                   ),
                 ),
               ),
@@ -60,7 +74,6 @@ class ProductItem extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildInfo() {
     return Padding(
       padding: const EdgeInsets.all(10),
