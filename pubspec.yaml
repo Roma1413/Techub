@@ -24,5 +24,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/categories/
-    - assets/profile_pics/
+
