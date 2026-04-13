@@ -121,9 +121,22 @@ class _ProductDetailsState extends State<ProductDetails> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        image: DecorationImage(
-          image: NetworkImage(widget.product.imageUrl),
+        color: TechColors.surfaceHigh,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          widget.product.imageUrl,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Icon(
+                Icons.broken_image,
+                color: Colors.white,
+                size: 40,
+              ),
+            );
+          },
         ),
       ),
     );
