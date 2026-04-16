@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../constants.dart';
 
 class Credentials {
@@ -82,12 +83,33 @@ class LoginPage extends StatelessWidget {
   }
 }
 
-class _LoginForm extends StatelessWidget {
+class _LoginForm extends StatefulWidget {
   final ValueChanged<Credentials> onLogIn;
-  _LoginForm({required this.onLogIn});
+
+  const _LoginForm({required this.onLogIn});
+
+  @override
+  State<_LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<_LoginForm>
+    with TickerProviderStateMixin {
 
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(seconds: 3),
+    vsync: this,
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,51 +119,103 @@ class _LoginForm extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.devices, color: TechColors.accent, size: 48),
+
+          /// 🔄 ROTATING ICON (this is the only real change)
+          AnimatedBuilder(
+            animation: _controller,
+            child: const Icon(
+              Icons.memory,
+              color: TechColors.accent,
+              size: 48,
+            ),
+            builder: (context, child) {
+              return Transform.rotate(
+                angle: _controller.value * 2 * math.pi,
+                child: child,
+              );
+            },
+          ),
+
           const SizedBox(height: 12),
-          const Text('TechHub', textAlign: TextAlign.center,
-            style: TextStyle(color: TechColors.textPrimary, fontSize: 28,
-              fontWeight: FontWeight.w800, letterSpacing: -0.5),
+
+          const Text(
+            'TechHub',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: TechColors.textPrimary,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
           ),
+
           const SizedBox(height: 4),
-          const Text('Sign in to your account', textAlign: TextAlign.center,
-            style: TextStyle(color: TechColors.textSecondary, fontSize: 14),
+
+          const Text(
+            'Sign in to your account',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: TechColors.textSecondary,
+              fontSize: 14,
+            ),
           ),
+
           const SizedBox(height: 40),
+
           TextField(
             controller: _usernameController,
             style: const TextStyle(color: TechColors.textPrimary),
             decoration: const InputDecoration(
               labelText: 'Username',
-              prefixIcon: Icon(Icons.person_outline, color: TechColors.textMuted),
+              prefixIcon: Icon(Icons.person_outline,
+                  color: TechColors.textMuted),
             ),
           ),
+
           const SizedBox(height: 16),
+
           TextField(
             controller: _passwordController,
             obscureText: true,
             style: const TextStyle(color: TechColors.textPrimary),
             decoration: const InputDecoration(
               labelText: 'Password',
-              prefixIcon: Icon(Icons.lock_outline, color: TechColors.textMuted),
+              prefixIcon:
+              Icon(Icons.lock_outline, color: TechColors.textMuted),
             ),
           ),
+
           const SizedBox(height: 28),
+
           ElevatedButton(
-            onPressed: () => onLogIn(
-              Credentials(_usernameController.text, _passwordController.text)),
+            onPressed: () => widget.onLogIn(
+              Credentials(
+                _usernameController.text,
+                _passwordController.text,
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: TechColors.accent,
               foregroundColor: TechColors.background,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            child: const Text(
+              'Sign In',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
           ),
+
           const SizedBox(height: 16),
-          const Text('Any username & password works for demo',
+
+          const Text(
+            'Any username & password works for demo',
             textAlign: TextAlign.center,
-            style: TextStyle(color: TechColors.textMuted, fontSize: 11),
+            style: TextStyle(
+              color: TechColors.textMuted,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
