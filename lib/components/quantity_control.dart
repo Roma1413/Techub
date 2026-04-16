@@ -32,8 +32,14 @@ class _QuantityControlState extends State<QuantityControl> {
                 icon: const Icon(Icons.remove, color: TechColors.textSecondary, size: 18),
                 onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
               ),
-              Text('$_quantity', style: const TextStyle(
-                color: TechColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+              Text(
+                '$_quantity',
+                style: const TextStyle(
+                  color: TechColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.add, color: TechColors.accent, size: 18),
                 onPressed: () => setState(() => _quantity++),
@@ -47,12 +53,17 @@ class _QuantityControlState extends State<QuantityControl> {
           child: ElevatedButton.icon(
             onPressed: () => widget.addToCart(_quantity),
             icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-            label: Text('Add to Cart — \$${(widget.product.price * _quantity).toStringAsFixed(2)}'),
+            label: Text(
+              'Add to Cart — \$${(widget.product.price * _quantity).toStringAsFixed(2)}',
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: TechColors.accent,
-              foregroundColor: TechColors.background,
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ),
