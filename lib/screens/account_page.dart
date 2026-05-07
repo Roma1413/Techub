@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 import '../models/models.dart';
+import 'bookmarks_page.dart';
 
 typedef LogoutCallback = void Function(bool didLogout);
 
 class AccountPage extends StatelessWidget {
   final User user;
+  final BookmarkManager bookmarkManager; // NEW
   final LogoutCallback onLogOut;
 
-  const AccountPage({super.key, required this.user, required this.onLogOut});
+  const AccountPage({
+    super.key,
+    required this.user,
+    required this.bookmarkManager, // NEW
+    required this.onLogOut,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +31,34 @@ class AccountPage extends StatelessWidget {
           _buildStatsRow(),
           const SizedBox(height: 24),
           _buildSection('Account', [
-            _menuTile(Icons.person_outline, 'Edit Profile', () {}),
-            _menuTile(Icons.credit_card_outlined, 'Payment Methods', () {}),
-            _menuTile(Icons.location_on_outlined, 'Saved Addresses', () {}),
-          ]),
-          const SizedBox(height: 16),
-          _buildSection('Support', [
-            _menuTile(Icons.help_outline, 'Help Center', () {}),
-            _menuTile(Icons.language, 'Visit TechHub Website', () async {
-              await launchUrl(Uri.parse('https://www.kodeco.com/'));
+            _menuTile(context, Icons.person_outline, 'Edit Profile', () {}),
+            _menuTile(context, Icons.credit_card_outlined, 'Payment Methods', () {}),
+            _menuTile(context, Icons.location_on_outlined, 'Saved Addresses', () {}),
+            // ── NEW: Bookmarks tile ──────────────────
+            _menuTile(context, Icons.bookmark_outline, 'My Bookmarks', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BookmarksPage(
+                    bookmarkManager: bookmarkManager,
+                  ),
+                ),
+              );
             }),
           ]),
           const SizedBox(height: 16),
+          _buildSection('Support', [
+            _menuTile(context, Icons.help_outline, 'Help Center', () {}),
+            _menuTile(context, Icons.language, 'Visit TechHub Website',
+                    () async {
+                  await launchUrl(Uri.parse('https://www.kodeco.com/'));
+                }),
+          ]),
+          const SizedBox(height: 16),
           _buildSection('', [
-            _menuTile(Icons.logout, 'Sign Out', () => onLogOut(true),
-              color: Colors.redAccent),
+            _menuTile(context, Icons.logout, 'Sign Out',
+                    () => onLogOut(true),
+                color: Colors.redAccent),
           ]),
           const SizedBox(height: 40),
         ],
@@ -61,22 +81,31 @@ class AccountPage extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(color: TechColors.accent.withOpacity(0.3),
-                blurRadius: 20, spreadRadius: 2),
+                  blurRadius: 20, spreadRadius: 2),
             ],
           ),
           child: Center(
             child: Text(user.firstName[0].toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800)),
           ),
         ),
         const SizedBox(height: 14),
-        Text(user.firstName, style: const TextStyle(
-          color: TechColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
+        Text(user.firstName,
+            style: const TextStyle(
+                color: TechColors.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
-        Text(user.role, style: const TextStyle(color: TechColors.textSecondary, fontSize: 14)),
+        Text(user.role,
+            style: const TextStyle(
+                color: TechColors.textSecondary, fontSize: 14)),
         const SizedBox(height: 4),
-        Text(user.email, style: const TextStyle(color: TechColors.textMuted, fontSize: 12)),
+        Text(user.email,
+            style: const TextStyle(
+                color: TechColors.textMuted, fontSize: 12)),
       ],
     );
   }
@@ -104,11 +133,15 @@ class AccountPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: const TextStyle(
-              color: TechColors.accent, fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(value,
+                style: const TextStyle(
+                    color: TechColors.accent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(
-              color: TechColors.textMuted, fontSize: 11)),
+            Text(label,
+                style: const TextStyle(
+                    color: TechColors.textMuted, fontSize: 11)),
           ],
         ),
       ),
@@ -120,8 +153,12 @@ class AccountPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title.isNotEmpty) ...[
-          Text(title, style: const TextStyle(
-            color: TechColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+          Text(title,
+              style: const TextStyle(
+                  color: TechColors.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5)),
           const SizedBox(height: 8),
         ],
         Container(
@@ -136,13 +173,18 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  Widget _menuTile(IconData icon, String label, VoidCallback onTap, {Color? color}) {
+  Widget _menuTile(BuildContext context, IconData icon, String label,
+      VoidCallback onTap, {Color? color}) {
     final c = color ?? TechColors.textPrimary;
     return ListTile(
-      leading: Icon(icon, color: color ?? TechColors.textSecondary, size: 20),
-      title: Text(label, style: TextStyle(color: c, fontSize: 14, fontWeight: FontWeight.w500)),
+      leading:
+      Icon(icon, color: color ?? TechColors.textSecondary, size: 20),
+      title: Text(label,
+          style: TextStyle(
+              color: c, fontSize: 14, fontWeight: FontWeight.w500)),
       trailing: color == null
-          ? const Icon(Icons.chevron_right, color: TechColors.textMuted, size: 18)
+          ? const Icon(Icons.chevron_right,
+          color: TechColors.textMuted, size: 18)
           : null,
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

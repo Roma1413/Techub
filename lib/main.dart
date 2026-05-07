@@ -20,10 +20,20 @@ class _TechHubAppState extends State<TechHubApp> {
   final _auth = TechHubAuth();
   final _cartManager = CartManager();
   final _orderManager = OrderManager();
+  final _bookmarkManager = BookmarkManager();         // NEW
+  final _searchHistory = SearchHistoryManager();      // NEW
   final _user = mockUser;
 
   bool _loggedIn = false;
   bool _initialized = false;
+  ThemeMode _themeMode = ThemeMode.dark;              // NEW
+
+  void _toggleTheme() {                              // NEW
+    setState(() {
+      _themeMode =
+      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    });
+  }
 
   late final GoRouter _router;
 
@@ -34,44 +44,41 @@ class _TechHubAppState extends State<TechHubApp> {
     _router = GoRouter(
       initialLocation: '/splash',
       routes: [
-        // ─── SPLASH ─────────────────────────────
         GoRoute(
           path: '/splash',
           builder: (_, __) => const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           ),
         ),
 
-        // ─── LOGIN ──────────────────────────────
         GoRoute(
           path: '/login',
           builder: (_, __) => LoginPage(
             onLogIn: (creds) async {
               await _auth.signIn(creds.username, creds.password);
-
               setState(() => _loggedIn = true);
-
               _router.go('/explore');
             },
           ),
         ),
 
-        // ─── MAIN APP SHELL ─────────────────────
         ShellRoute(
-          builder: (context, state, child) {
-            return _Shell(
-              currentPath: state.matchedLocation,
-              child: child,
-            );
-          },
+          builder: (context, state, child) => _Shell(
+            currentPath: state.matchedLocation,
+            themeMode: _themeMode,
+            onToggleTheme: _toggleTheme,
+            child: child,
+          ),
           routes: [
             GoRoute(
               path: '/explore',
               builder: (_, __) => ExplorePage(
                 cartManager: _cartManager,
                 orderManager: _orderManager,
+                bookmarkManager: _bookmarkManager,   // NEW
+                searchHistory: _searchHistory,        // NEW
+                themeMode: _themeMode,               // NEW
+                onToggleTheme: _toggleTheme,         // NEW
               ),
             ),
             GoRoute(
@@ -83,11 +90,10 @@ class _TechHubAppState extends State<TechHubApp> {
               path: '/account',
               builder: (_, __) => AccountPage(
                 user: _user,
+                bookmarkManager: _bookmarkManager,   // NEW
                 onLogOut: (_) async {
                   await _auth.signOut();
-
                   setState(() => _loggedIn = false);
-
                   _router.go('/login');
                 },
               ),
@@ -95,51 +101,33 @@ class _TechHubAppState extends State<TechHubApp> {
           ],
         ),
 
-        // ─── DEEP LINK ─────────────────────────
         GoRoute(
           path: '/store/:id',
           builder: (context, state) {
             final id = state.pathParameters['id']!;
-
             final store = techStores.firstWhere(
                   (s) => s.id == id,
               orElse: () => techStores.first,
             );
-
             return StorePage(
               store: store,
               cartManager: _cartManager,
               ordersManager: _orderManager,
+              bookmarkManager: _bookmarkManager,     // NEW
             );
           },
         ),
       ],
 
-      // ─── GLOBAL REDIRECT LOGIC ───────────────
       redirect: (context, state) {
         final location = state.matchedLocation;
-
         final isGoingToLogin = location == '/login';
         final isSplash = location == '/splash';
 
-        // Wait until auth is ready
         if (!_initialized) return '/splash';
-
-        // Not logged in → force login
-        if (!_loggedIn && !isGoingToLogin) {
-          return '/login';
-        }
-
-        // Logged in → prevent going back to login
-        if (_loggedIn && isGoingToLogin) {
-          return '/explore';
-        }
-
-        // Remove splash after init
-        if (_initialized && isSplash) {
-          return _loggedIn ? '/explore' : '/login';
-        }
-
+        if (!_loggedIn && !isGoingToLogin) return '/login';
+        if (_loggedIn && isGoingToLogin) return '/explore';
+        if (_initialized && isSplash) return _loggedIn ? '/explore' : '/login';
         return null;
       },
     );
@@ -150,6 +138,11 @@ class _TechHubAppState extends State<TechHubApp> {
   Future<void> _initAuth() async {
     final loggedIn = await _auth.loggedIn;
 
+    await Future.wait([
+      _bookmarkManager.load(),
+      _searchHistory.load(),
+    ]);
+
     if (!mounted) return;
 
     setState(() {
@@ -157,29 +150,33 @@ class _TechHubAppState extends State<TechHubApp> {
       _initialized = true;
     });
 
-    // Navigate after initialization
     _router.go(loggedIn ? '/explore' : '/login');
   }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'TechHub',
-      theme: techHubTheme(),
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: techHubTheme(),
+      themeMode: _themeMode,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-
+// ─── Shell ───────────────────────────────────────────────
 
 class _Shell extends StatelessWidget {
   final String currentPath;
+  final ThemeMode themeMode;
+  final VoidCallback onToggleTheme;
   final Widget child;
 
   const _Shell({
     required this.currentPath,
+    required this.themeMode,
+    required this.onToggleTheme,
     required this.child,
   });
 
@@ -196,9 +193,7 @@ class _Shell extends StatelessWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: TechColors.border),
-          ),
+          border: Border(top: BorderSide(color: TechColors.border)),
         ),
         child: NavigationBar(
           backgroundColor: TechColors.surface,

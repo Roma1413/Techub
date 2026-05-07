@@ -11,12 +11,14 @@ class StorePage extends StatefulWidget {
   final TechStore store;
   final CartManager cartManager;
   final OrderManager ordersManager;
+  final BookmarkManager bookmarkManager; // Add this
 
   const StorePage({
     super.key,
     required this.store,
     required this.cartManager,
     required this.ordersManager,
+    required this.bookmarkManager, // Add this
   });
 
   @override
@@ -205,7 +207,8 @@ class _StorePageState extends State<StorePage> {
 
                 return GestureDetector(
                   onTap: () => _showProductDetails(product),
-                  child: ProductItem(product: product),
+                  child: ProductItem(product: product,
+                  bookmarkManager: widget.bookmarkManager,),
                 );
               },
             ),

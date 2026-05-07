@@ -5,3 +5,5 @@ export 'order_manager.dart';
 export 'tech_post.dart';
 export 'product.dart';
 export 'user.dart';
+export 'bookmark_manager.dart';      // NEW
+export 'search_history_manager.dart'; // NEW

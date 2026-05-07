@@ -14,6 +14,7 @@ class StoreSection extends StatelessWidget {
     required this.stores,
     required this.cartManager,
     required this.orderManager,
+    required BookmarkManager bookmarkManager,
   });
 
   @override

@@ -1,7 +1,15 @@
 class ProductSpec {
   final String key;
   final String value;
+
   ProductSpec(this.key, this.value);
+
+  factory ProductSpec.fromJson(Map<String, dynamic> json) {
+    return ProductSpec(
+      json['key'],
+      json['value'],
+    );
+  }
 }
 
 class Product {
@@ -15,7 +23,7 @@ class Product {
   final int reviewCount;
   final List<ProductSpec> specs;
   final bool inStock;
-  final String badge; // e.g. 'NEW', 'HOT', 'SALE', ''
+  final String badge;
 
   Product({
     required this.id,
@@ -33,7 +41,27 @@ class Product {
 
   bool get isOnSale => originalPrice > price;
 
-  String getRatingAndReviews() => '${rating.toStringAsFixed(1)} ★  ($reviewCount reviews)';
+  String getRatingAndReviews() =>
+      '${rating.toStringAsFixed(1)} ★ ($reviewCount reviews)';
+
+  // ✅ JSON SUPPORT
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      price: (json['price'] as num).toDouble(),
+      originalPrice: (json['originalPrice'] as num).toDouble(),
+      imageUrl: json['imageUrl'],
+      rating: (json['rating'] as num).toDouble(),
+      reviewCount: json['reviewCount'],
+      inStock: json['inStock'] ?? true,
+      badge: json['badge'] ?? '',
+      specs: (json['specs'] as List)
+          .map((e) => ProductSpec.fromJson(e))
+          .toList(),
+    );
+  }
 }
 
 class TechStore {
@@ -62,145 +90,297 @@ class TechStore {
   });
 
   String getRatingAndDelivery() =>
-      '${rating.toStringAsFixed(1)} ★  •  $deliveryTime  •  \$$deliveryFee delivery';
+      '${rating.toStringAsFixed(1)} ★ • $deliveryTime • \$$deliveryFee delivery';
+
+  // ✅ JSON SUPPORT
+  factory TechStore.fromJson(Map<String, dynamic> json) {
+    return TechStore(
+      id: json['id'],
+      name: json['name'],
+      address: json['address'],
+      imageUrl: json['imageUrl'],
+      rating: (json['rating'] as num).toDouble(),
+      category: json['category'],
+      deliveryTime: json['deliveryTime'],
+      deliveryFee: (json['deliveryFee'] as num).toDouble(),
+      attributes: json['attributes'],
+      products: (json['products'] as List)
+          .map((e) => Product.fromJson(e))
+          .toList(),
+    );
+  }
 }
 
-// ─── Mock Products ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// APPLE PRODUCTS
+// ─────────────────────────────────────────────
 
-final _appleProducts = [
+final List<Product> _appleProducts = [
   Product(
-    id: 'p1', name: 'iPhone 16 Pro', badge: 'NEW',
-    description: '6.3-inch Super Retina XDR display, A18 Pro chip, 48MP camera system.',
-    price: 999.00, originalPrice: 999.00,
+    id: 'p1',
+    name: 'iPhone 16 Pro',
+    badge: 'NEW',
+    description:
+    '6.3-inch Super Retina XDR display, A18 Pro chip, 48MP camera system.',
+    price: 999,
+    originalPrice: 999,
     imageUrl: 'assets/prod/Iphone.jpg',
-    rating: 4.9, reviewCount: 2841,
-    specs: [ProductSpec('Chip', 'A18 Pro'), ProductSpec('Storage', '256GB'), ProductSpec('Camera', '48MP')],
+    rating: 4.9,
+    reviewCount: 2841,
+    specs: [
+      ProductSpec('Chip', 'A18 Pro'),
+      ProductSpec('Storage', '256GB'),
+      ProductSpec('Camera', '48MP'),
+    ],
   ),
   Product(
-    id: 'p2', name: 'MacBook Pro 14"', badge: 'HOT',
-    description: 'M4 Pro chip, Liquid Retina XDR display, up to 24 hours battery.',
-    price: 1999.00, originalPrice: 2199.00,
+    id: 'p2',
+    name: 'MacBook Pro 14"',
+    badge: 'HOT',
+    description:
+    'M4 Pro chip, Liquid Retina XDR display, up to 24 hours battery.',
+    price: 1999,
+    originalPrice: 2199,
     imageUrl: 'assets/prod/mac.jpg',
-    rating: 4.8, reviewCount: 1204,
-    specs: [ProductSpec('Chip', 'M4 Pro'), ProductSpec('RAM', '24GB'), ProductSpec('SSD', '512GB')],
+    rating: 4.8,
+    reviewCount: 1204,
+    specs: [
+      ProductSpec('Chip', 'M4 Pro'),
+      ProductSpec('RAM', '24GB'),
+      ProductSpec('SSD', '512GB'),
+    ],
   ),
   Product(
-    id: 'p3', name: 'AirPods Pro 2',
-    description: 'Active Noise Cancellation, Adaptive Transparency, Personalized Spatial Audio.',
-    price: 249.00, originalPrice: 299.00,
+    id: 'p3',
+    name: 'AirPods Pro 2',
+    description:
+    'Active Noise Cancellation, Adaptive Transparency, Personalized Spatial Audio.',
+    price: 249,
+    originalPrice: 299,
     imageUrl: 'assets/prod/airpods.jpg',
-    rating: 4.7, reviewCount: 3912,
-    specs: [ProductSpec('ANC', 'Yes'), ProductSpec('Battery', '30h case'), ProductSpec('Chip', 'H2')],
+    rating: 4.7,
+    reviewCount: 3912,
+    specs: [
+      ProductSpec('ANC', 'Yes'),
+      ProductSpec('Battery', '30h case'),
+      ProductSpec('Chip', 'H2'),
+    ],
   ),
   Product(
-    id: 'p4', name: 'Apple Watch Ultra 2',
-    description: '49mm titanium case, up to 60h battery, precision dual-frequency GPS.',
-    price: 799.00, originalPrice: 799.00,
+    id: 'p4',
+    name: 'Apple Watch Ultra 2',
+    description:
+    '49mm titanium case, up to 60h battery, precision dual-frequency GPS.',
+    price: 799,
+    originalPrice: 799,
     imageUrl: 'assets/prod/watch.jpg',
-    rating: 4.6, reviewCount: 892,
-    specs: [ProductSpec('Case', 'Titanium'), ProductSpec('GPS', 'Dual-freq'), ProductSpec('Water', '100m')],
+    rating: 4.6,
+    reviewCount: 892,
+    specs: [
+      ProductSpec('Case', 'Titanium'),
+      ProductSpec('GPS', 'Dual-freq'),
+      ProductSpec('Water', '100m'),
+    ],
   ),
 ];
 
-final _samsungProducts = [
+// ─────────────────────────────────────────────
+// SAMSUNG PRODUCTS
+// ─────────────────────────────────────────────
+
+final List<Product> _samsungProducts = [
   Product(
-    id: 'p5', name: 'Galaxy S25 Ultra', badge: 'NEW',
-    description: 'Snapdragon 8 Elite, 200MP camera, built-in S Pen, 5000mAh battery.',
-    price: 1299.00, originalPrice: 1299.00,
+    id: 'p5',
+    name: 'Galaxy S25 Ultra',
+    badge: 'NEW',
+    description:
+    'Snapdragon 8 Elite, 200MP camera, built-in S Pen, 5000mAh battery.',
+    price: 1299,
+    originalPrice: 1299,
     imageUrl: 'assets/prod/galaxy.jpg',
-    rating: 4.8, reviewCount: 1537,
-    specs: [ProductSpec('Chip', 'SD 8 Elite'), ProductSpec('Camera', '200MP'), ProductSpec('Battery', '5000mAh')],
+    rating: 4.8,
+    reviewCount: 1537,
+    specs: [
+      ProductSpec('Chip', 'SD 8 Elite'),
+      ProductSpec('Camera', '200MP'),
+      ProductSpec('Battery', '5000mAh'),
+    ],
   ),
   Product(
-    id: 'p6', name: 'Samsung 65" QLED 4K', badge: 'SALE',
-    description: 'Quantum HDR, Neo Quantum Processor 4K, Object Tracking Sound.',
-    price: 1199.00, originalPrice: 1799.00,
+    id: 'p6',
+    name: 'Samsung 65" QLED 4K',
+    badge: 'SALE',
+    description:
+    'Quantum HDR, Neo Quantum Processor 4K, Object Tracking Sound.',
+    price: 1199,
+    originalPrice: 1799,
     imageUrl: 'assets/prod/qoled.jpg',
-    rating: 4.7, reviewCount: 743,
-    specs: [ProductSpec('Size', '65"'), ProductSpec('Resolution', '4K'), ProductSpec('HDR', 'Quantum HDR')],
+    rating: 4.7,
+    reviewCount: 743,
+    specs: [
+      ProductSpec('Size', '65"'),
+      ProductSpec('Resolution', '4K'),
+      ProductSpec('HDR', 'Quantum HDR'),
+    ],
   ),
   Product(
-    id: 'p7', name: 'Galaxy Tab S10+',
-    description: '12.4-inch Dynamic AMOLED 2X, S Pen included, IP68 water resistance.',
-    price: 899.00, originalPrice: 999.00,
+    id: 'p7',
+    name: 'Galaxy Tab S10+',
+    description:
+    '12.4-inch Dynamic AMOLED 2X, S Pen included, IP68 water resistance.',
+    price: 899,
+    originalPrice: 999,
     imageUrl: 'assets/prod/tab.jpg',
-    rating: 4.5, reviewCount: 621,
-    specs: [ProductSpec('Display', '12.4" AMOLED'), ProductSpec('Chip', 'SD 8 Gen 3'), ProductSpec('Storage', '256GB')],
+    rating: 4.5,
+    reviewCount: 621,
+    specs: [
+      ProductSpec('Display', '12.4" AMOLED'),
+      ProductSpec('Chip', 'SD 8 Gen 3'),
+      ProductSpec('Storage', '256GB'),
+    ],
   ),
   Product(
-    id: 'p8', name: 'Galaxy Buds3 Pro', badge: 'HOT',
-    description: 'Blade-type design, 360° Audio, ANC with 24-bit audio.',
-    price: 249.00, originalPrice: 249.00,
+    id: 'p8',
+    name: 'Galaxy Buds3 Pro',
+    badge: 'HOT',
+    description:
+    'Blade-type design, 360° Audio, ANC with 24-bit audio.',
+    price: 249,
+    originalPrice: 249,
     imageUrl: 'assets/prod/buds.jpg',
-    rating: 4.4, reviewCount: 488,
-    specs: [ProductSpec('ANC', 'Yes'), ProductSpec('Battery', '30h'), ProductSpec('Audio', '24-bit')],
+    rating: 4.4,
+    reviewCount: 488,
+    specs: [
+      ProductSpec('ANC', 'Yes'),
+      ProductSpec('Battery', '30h'),
+      ProductSpec('Audio', '24-bit'),
+    ],
   ),
 ];
 
-final _sonyProducts = [
+// ─────────────────────────────────────────────
+// SONY PRODUCTS
+// ─────────────────────────────────────────────
+
+final List<Product> _sonyProducts = [
   Product(
-    id: 'p9', name: 'PlayStation 5 Pro', badge: 'HOT',
-    description: 'PlayStation Spectral Super Resolution, 45% faster GPU, 4K 120FPS gaming.',
-    price: 699.00, originalPrice: 699.00,
+    id: 'p9',
+    name: 'PlayStation 5 Pro',
+    badge: 'HOT',
+    description:
+    'PlayStation Spectral Super Resolution, 45% faster GPU, 4K 120FPS gaming.',
+    price: 699,
+    originalPrice: 699,
     imageUrl: 'assets/prod/ps.webp',
-    rating: 4.9, reviewCount: 5204,
-    specs: [ProductSpec('GPU', '45% faster'), ProductSpec('Storage', '2TB SSD'), ProductSpec('Output', '8K')],
+    rating: 4.9,
+    reviewCount: 5204,
+    specs: [
+      ProductSpec('GPU', '45% faster'),
+      ProductSpec('Storage', '2TB SSD'),
+      ProductSpec('Output', '8K'),
+    ],
   ),
   Product(
-    id: 'p10', name: 'WH-1000XM6', badge: 'NEW',
-    description: 'Industry-leading noise canceling, 40-hour battery, multipoint connection.',
-    price: 399.00, originalPrice: 449.00,
+    id: 'p10',
+    name: 'WH-1000XM6',
+    badge: 'NEW',
+    description:
+    'Industry-leading noise canceling, 40-hour battery, multipoint connection.',
+    price: 399,
+    originalPrice: 449,
     imageUrl: 'assets/prod/WH.jpg',
-    rating: 4.8, reviewCount: 2103,
-    specs: [ProductSpec('ANC', 'Industry-leading'), ProductSpec('Battery', '40h'), ProductSpec('Codec', 'LDAC')],
+    rating: 4.8,
+    reviewCount: 2103,
+    specs: [
+      ProductSpec('ANC', 'Industry-leading'),
+      ProductSpec('Battery', '40h'),
+      ProductSpec('Codec', 'LDAC'),
+    ],
   ),
   Product(
-    id: 'p11', name: 'Alpha 7C II',
-    description: 'Full-frame mirrorless, 33MP BSI sensor, AI-based autofocus.',
-    price: 2199.00, originalPrice: 2199.00,
+    id: 'p11',
+    name: 'Alpha 7C II',
+    description:
+    'Full-frame mirrorless, 33MP BSI sensor, AI-based autofocus.',
+    price: 2199,
+    originalPrice: 2199,
     imageUrl: 'assets/prod/photo.jpg',
-    rating: 4.7, reviewCount: 312,
-    specs: [ProductSpec('Sensor', '33MP Full-frame'), ProductSpec('AF', 'AI-based'), ProductSpec('Video', '4K 60fps')],
+    rating: 4.7,
+    reviewCount: 312,
+    specs: [
+      ProductSpec('Sensor', '33MP Full-frame'),
+      ProductSpec('AF', 'AI-based'),
+      ProductSpec('Video', '4K 60fps'),
+    ],
   ),
   Product(
-    id: 'p12', name: 'Bravia 8 OLED 55"', badge: 'SALE',
-    description: 'XR OLED Contrast Pro, Acoustic Surface Audio+, Google TV.',
-    price: 1799.00, originalPrice
-      : 2499.00,
+    id: 'p12',
+    name: 'Bravia 8 OLED 55"',
+    badge: 'SALE',
+    description:
+    'XR OLED Contrast Pro, Acoustic Surface Audio+, Google TV.',
+    price: 1799,
+    originalPrice: 2499,
     imageUrl: 'assets/prod/tvsony.jpg',
-    rating: 4.6, reviewCount: 441,
-    specs: [ProductSpec('Panel', 'OLED'), ProductSpec('Size', '55"'), ProductSpec('OS', 'Google TV')],
+    rating: 4.6,
+    reviewCount: 441,
+    specs: [
+      ProductSpec('Panel', 'OLED'),
+      ProductSpec('Size', '55"'),
+      ProductSpec('OS', 'Google TV'),
+    ],
   ),
 ];
 
-// ─── Mock Stores ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// STORES
+// ─────────────────────────────────────────────
 
 final List<TechStore> techStores = [
   TechStore(
-    id: 's1', name: 'Apple Premium Store',
+    id: 's1',
+    name: 'Apple Premium Store',
     address: '1 Infinite Loop, Cupertino, CA',
     imageUrl: 'assets/tech/apple.jpg',
-    rating: 4.9, category: 'Apple Authorized',
-    deliveryTime: '1-2 days', deliveryFee: 0.00,
-    attributes: 'Official Apple Reseller  •  Free Returns  •  AppleCare+',
+    rating: 4.9,
+    category: 'Apple Authorized',
+    deliveryTime: '1-2 days',
+    deliveryFee: 0,
+    attributes: 'Official Apple Reseller • Free Returns • AppleCare+',
     products: _appleProducts,
   ),
   TechStore(
-    id: 's2', name: 'Samsung Experience',
+    id: 's2',
+    name: 'Samsung Experience',
     address: '837 Washington St, New York, NY',
     imageUrl: 'assets/tech/samsung.jpg',
-    rating: 4.7, category: 'Samsung Official',
-    deliveryTime: '2-3 days', deliveryFee: 9.99,
-    attributes: 'Official Samsung Store  •  Trade-In Program  •  Expert Staff',
+    rating: 4.7,
+    category: 'Samsung Official',
+    deliveryTime: '2-3 days',
+    deliveryFee: 9.99,
+    attributes: 'Official Samsung Store • Trade-In Program • Expert Staff',
     products: _samsungProducts,
   ),
   TechStore(
-    id: 's3', name: 'Sony Tech World',
+    id: 's3',
+    name: 'Sony Tech World',
     address: '550 Madison Ave, New York, NY',
     imageUrl: 'assets/tech/sony.jpg',
-    rating: 4.6, category: 'Sony Official',
-    deliveryTime: '2-4 days', deliveryFee: 4.99,
-    attributes: 'Official Sony Retailer  •  Gaming Hub  •  Audio Demos',
+    rating: 4.6,
+    category: 'Sony Official',
+    deliveryTime: '2-4 days',
+    deliveryFee: 4.99,
+    attributes: 'Official Sony Retailer • Gaming Hub • Audio Demos',
     products: _sonyProducts,
   ),
+];
+
+// ─────────────────────────────────────────────
+// ALL PRODUCTS (for bookmarks/load)
+// ─────────────────────────────────────────────
+
+final List<Product> allProducts = [
+  ..._appleProducts,
+  ..._samsungProducts,
+  ..._sonyProducts,
 ];
