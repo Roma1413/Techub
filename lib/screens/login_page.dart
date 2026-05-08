@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Credentials {
-  final String username;
+  final String email;
   final String password;
-  Credentials(this.username, this.password);
+  Credentials(this.email, this.password);
 }
 
 class LoginPage extends StatelessWidget {
   final ValueChanged<Credentials> onLogIn;
+
   const LoginPage({super.key, required this.onLogIn});
 
   @override
@@ -24,8 +26,10 @@ class LoginPage extends StatelessWidget {
                 Expanded(child: _buildHero()),
                 Expanded(
                   child: Center(
-                    child: FractionallySizedBox(widthFactor: 0.7,
-                      child: _LoginForm(onLogIn: onLogIn)),
+                    child: FractionallySizedBox(
+                      widthFactor: 0.7,
+                      child: _LoginForm(onLogIn: onLogIn),
+                    ),
                   ),
                 ),
               ],
@@ -43,36 +47,35 @@ class LoginPage extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0D0D1A), Color(0xFF0A1628), TechColors.surfaceHigh],
+          colors: [
+            Color(0xFF0D0D1A),
+            Color(0xFF0A1628),
+            TechColors.surfaceHigh
+          ],
         ),
       ),
       child: Stack(
         children: [
-          // Grid pattern
-          Positioned.fill(
-            child: CustomPaint(painter: _GridPainter()),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _GridPainter())),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(
-                    color: TechColors.accent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: TechColors.accent.withOpacity(0.3), width: 1.5),
+              children: const [
+                Icon(Icons.devices,
+                    color: TechColors.accent, size: 60),
+                SizedBox(height: 20),
+                Text(
+                  'TechHub',
+                  style: TextStyle(
+                    color: TechColors.textPrimary,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
                   ),
-                  child: const Icon(Icons.devices, color: TechColors.accent, size: 40),
                 ),
-                const SizedBox(height: 24),
-                const Text('TechHub', style: TextStyle(
-                  color: TechColors.textPrimary, fontSize: 36, fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                )),
-                const SizedBox(height: 8),
-                const Text('Premium Electronics, Delivered.',
-                  style: TextStyle(color: TechColors.textSecondary, fontSize: 15),
+                SizedBox(height: 8),
+                Text(
+                  'Premium Electronics, Delivered.',
+                  style: TextStyle(color: TechColors.textSecondary),
                 ),
               ],
             ),
@@ -94,9 +97,12 @@ class _LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<_LoginForm>
     with TickerProviderStateMixin {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  bool _isLoading = false;
 
   late final AnimationController _controller = AnimationController(
     duration: const Duration(seconds: 3),
@@ -106,9 +112,69 @@ class _LoginFormState extends State<_LoginForm>
   @override
   void dispose() {
     _controller.dispose();
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  bool _validate() {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields")),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _login() async {
+    if (!_validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      widget.onLogIn(
+        Credentials(
+          _emailController.text,
+          _passwordController.text,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Login failed")),
+      );
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _register() async {
+    if (!_validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created successfully")),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? "Registration failed")),
+      );
+    }
+
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -117,17 +183,12 @@ class _LoginFormState extends State<_LoginForm>
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
 
-          /// 🔄 ROTATING ICON (this is the only real change)
           AnimatedBuilder(
             animation: _controller,
-            child: const Icon(
-              Icons.memory,
-              color: TechColors.accent,
-              size: 48,
-            ),
+            child: const Icon(Icons.memory,
+                color: TechColors.accent, size: 48),
             builder: (context, child) {
               return Transform.rotate(
                 angle: _controller.value * 2 * math.pi,
@@ -136,85 +197,54 @@ class _LoginFormState extends State<_LoginForm>
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
           const Text(
-            'TechHub',
-            textAlign: TextAlign.center,
+            "Sign in to TechHub",
             style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
               color: TechColors.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
             ),
           ),
 
-          const SizedBox(height: 4),
-
-          const Text(
-            'Sign in to your account',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: TechColors.textSecondary,
-              fontSize: 14,
-            ),
-          ),
-
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
 
           TextField(
-            controller: _usernameController,
-            style: const TextStyle(color: TechColors.textPrimary),
+            controller: _emailController,
             decoration: const InputDecoration(
-              labelText: 'Username',
-              prefixIcon: Icon(Icons.person_outline,
-                  color: TechColors.textMuted),
+              labelText: "Email",
+              prefixIcon: Icon(Icons.email),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 15),
 
           TextField(
             controller: _passwordController,
             obscureText: true,
-            style: const TextStyle(color: TechColors.textPrimary),
             decoration: const InputDecoration(
-              labelText: 'Password',
-              prefixIcon:
-              Icon(Icons.lock_outline, color: TechColors.textMuted),
+              labelText: "Password",
+              prefixIcon: Icon(Icons.lock),
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 25),
 
           ElevatedButton(
-            onPressed: () => widget.onLogIn(
-              Credentials(
-                _usernameController.text,
-                _passwordController.text,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TechColors.accent,
-              foregroundColor: TechColors.background,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Sign In',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
+            onPressed: _isLoading ? null : _login,
+            child: _isLoading
+                ? const CircularProgressIndicator()
+                : const Text("Sign In"),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          const Text(
-            'Any username & password works for demo',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: TechColors.textMuted,
-              fontSize: 11,
+          TextButton(
+            onPressed: _isLoading ? null : _register,
+            child: const Text(
+              "Create Account",
+              style: TextStyle(color: TechColors.accent),
             ),
           ),
         ],
@@ -229,10 +259,13 @@ class _GridPainter extends CustomPainter {
     final paint = Paint()
       ..color = TechColors.border.withOpacity(0.4)
       ..strokeWidth = 0.5;
+
     const step = 40.0;
+
     for (double x = 0; x < size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
+
     for (double y = 0; y < size.height; y += step) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }

@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'data/database/db_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 import 'constants.dart';
 import 'models/models.dart';
 import 'screens/screens.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const TechHubApp());
 }
 
@@ -17,11 +26,13 @@ class TechHubApp extends StatefulWidget {
 }
 
 class _TechHubAppState extends State<TechHubApp> {
-  final _auth = TechHubAuth();
+
   final _cartManager = CartManager();
   final _orderManager = OrderManager();
   final _bookmarkManager = BookmarkManager();         // NEW
-  final _searchHistory = SearchHistoryManager();      // NEW
+  final _searchHistory = SearchHistoryManager();
+  final _dbRepository = DbRepository();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final _user = mockUser;
 
   bool _loggedIn = false;
@@ -55,7 +66,11 @@ class _TechHubAppState extends State<TechHubApp> {
           path: '/login',
           builder: (_, __) => LoginPage(
             onLogIn: (creds) async {
-              await _auth.signIn(creds.username, creds.password);
+              await _auth.signInWithEmailAndPassword(
+                email: creds.email, // (or rename to creds.email)
+                password: creds.password,
+              );
+
               setState(() => _loggedIn = true);
               _router.go('/explore');
             },
@@ -113,7 +128,8 @@ class _TechHubAppState extends State<TechHubApp> {
               store: store,
               cartManager: _cartManager,
               ordersManager: _orderManager,
-              bookmarkManager: _bookmarkManager,     // NEW
+              bookmarkManager: _bookmarkManager,
+              user: _user,                               // NEW
             );
           },
         ),
@@ -136,7 +152,10 @@ class _TechHubAppState extends State<TechHubApp> {
   }
 
   Future<void> _initAuth() async {
-    final loggedIn = await _auth.loggedIn;
+    // ← NEW: init database first — seeds JSON on first launch
+    await _dbRepository.init();
+
+    final loggedIn = _auth.currentUser != null;
 
     await Future.wait([
       _bookmarkManager.load(),

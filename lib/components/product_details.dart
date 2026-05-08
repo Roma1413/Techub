@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../constants.dart';
 import '../models/models.dart';
+import '../screens/reviews_page.dart'; // NEW
 import 'quantity_control.dart';
 
 class ProductDetails extends StatefulWidget {
   final Product product;
   final CartManager cartManager;
   final VoidCallback quantityUpdated;
+  final User user; // NEW
 
   const ProductDetails({
     super.key,
     required this.product,
     required this.cartManager,
     required this.quantityUpdated,
+    required this.user, // NEW
   });
 
   @override
@@ -33,7 +36,6 @@ class _ProductDetailsState extends State<ProductDetails>
   void initState() {
     super.initState();
 
-    // ---------------- ENTRY ANIMATION ----------------
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -53,7 +55,6 @@ class _ProductDetailsState extends State<ProductDetails>
 
     _controller.forward();
 
-    // ---------------- COLOR LOOP ANIMATION ----------------
     _colorController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -103,7 +104,6 @@ class _ProductDetailsState extends State<ProductDetails>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Handle bar
                 Center(
                   child: Container(
                     width: 40,
@@ -115,7 +115,6 @@ class _ProductDetailsState extends State<ProductDetails>
                     ),
                   ),
                 ),
-
                 _buildHeader(),
                 const SizedBox(height: 16),
                 _buildImage(),
@@ -231,6 +230,41 @@ class _ProductDetailsState extends State<ProductDetails>
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+
+              // ── NEW: See Reviews button ──────────────
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReviewsPage(
+                        productId: widget.product.id,
+                        productName: widget.product.name,
+                        user: widget.user,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: TechColors.accent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: TechColors.accent.withOpacity(0.3)),
+                  ),
+                  child: const Text(
+                    'See Reviews →',
+                    style: TextStyle(
+                      color: TechColors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

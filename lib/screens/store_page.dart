@@ -11,14 +11,17 @@ class StorePage extends StatefulWidget {
   final TechStore store;
   final CartManager cartManager;
   final OrderManager ordersManager;
-  final BookmarkManager bookmarkManager; // Add this
+  final BookmarkManager bookmarkManager;
+  final User user;// Add this
 
   const StorePage({
     super.key,
     required this.store,
     required this.cartManager,
     required this.ordersManager,
-    required this.bookmarkManager, // Add this
+    required this.bookmarkManager,
+    required this.user,// Add this
+
   });
 
   @override
@@ -232,6 +235,7 @@ class _StorePageState extends State<StorePage> {
         product: product,
         cartManager: widget.cartManager,
         quantityUpdated: () => setState(() {}),
+        user: widget.user, // ← ADD THIS
       ),
     );
   }

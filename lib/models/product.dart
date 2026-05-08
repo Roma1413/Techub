@@ -24,6 +24,7 @@ class Product {
   final List<ProductSpec> specs;
   final bool inStock;
   final String badge;
+  bool bookmarked;
 
   Product({
     required this.id,
@@ -37,6 +38,7 @@ class Product {
     required this.specs,
     this.inStock = true,
     this.badge = '',
+    this.bookmarked = false,
   });
 
   bool get isOnSale => originalPrice > price;
@@ -57,6 +59,7 @@ class Product {
       reviewCount: json['reviewCount'],
       inStock: json['inStock'] ?? true,
       badge: json['badge'] ?? '',
+      bookmarked: json['bookmarked'] ?? false,
       specs: (json['specs'] as List)
           .map((e) => ProductSpec.fromJson(e))
           .toList(),
