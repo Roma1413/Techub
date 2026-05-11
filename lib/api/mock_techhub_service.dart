@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../utils/shop_category_resolver.dart';
 
 class ExploreData {
   final List<TechStore> stores;
@@ -11,7 +12,7 @@ class ExploreData {
 class MockTechHubService {
   Future<ExploreData> getExploreData() async {
     final stores = await _getStores();
-    final categories = await _getCategories();
+    final categories = ShopCategoryResolver.categoriesWithCounts(stores);
     final posts = await _getCommunityFeed();
     return ExploreData(stores, categories, posts);
   }
@@ -19,11 +20,6 @@ class MockTechHubService {
   Future<List<TechStore>> _getStores() async {
     await Future.delayed(const Duration(milliseconds: 60));
     return techStores;
-  }
-
-  Future<List<TechCategory>> _getCategories() async {
-    await Future.delayed(const Duration(milliseconds: 40));
-    return techCategories;
   }
 
   Future<List<TechPost>> _getCommunityFeed() async {

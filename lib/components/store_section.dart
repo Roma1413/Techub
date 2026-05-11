@@ -8,13 +8,17 @@ class StoreSection extends StatelessWidget {
   final List<TechStore> stores;
   final CartManager cartManager;
   final OrderManager orderManager;
+  final BookmarkManager bookmarkManager;
+  /// When set, opens the store with `?shop=` so the store page shows only that aisle.
+  final String? shopCategoryFilter;
 
   const StoreSection({
     super.key,
     required this.stores,
     required this.cartManager,
     required this.orderManager,
-    required BookmarkManager bookmarkManager,
+    required this.bookmarkManager,
+    this.shopCategoryFilter,
   });
 
   @override
@@ -51,7 +55,16 @@ class StoreSection extends StatelessWidget {
                   width: 260,
                   child: StoreLandscapeCard(
                     store: store,
-                    onTap: () => context.go('/store/${store.id}'),
+                    onTap: () {
+                      final cat = shopCategoryFilter;
+                      if (cat != null && cat.isNotEmpty) {
+                        context.go(
+                          '/store/${store.id}?shop=${Uri.encodeQueryComponent(cat)}',
+                        );
+                      } else {
+                        context.go('/store/${store.id}');
+                      }
+                    },
                   ),
                 );
               },

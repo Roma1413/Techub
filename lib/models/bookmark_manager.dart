@@ -3,7 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'product.dart';
 
 class BookmarkManager {
-  static const _key = 'bookmarks';
+  /// Old global key (pre–per-account); migrated once per signed-in user.
+  static const _legacyKey = 'bookmarks';
+
+  String? _userId;
 
   final List<Product> _bookmarks = [];
 
@@ -12,11 +15,38 @@ class BookmarkManager {
   bool isBookmarked(String productId) =>
       _bookmarks.any((p) => p.id == productId);
 
-  // ✅ LOAD FROM STORAGE
+  String get _storageKey {
+    final id = _userId;
+    if (id == null || id.isEmpty) {
+      return 'bookmarks__guest';
+    }
+    return 'bookmarks_$id';
+  }
+
+  /// Call when the signed-in user changes (login, logout, or account switch).
+  /// Clears memory and loads bookmarks for that user from storage.
+  Future<void> bindToUser(String? firebaseUid) async {
+    _userId = firebaseUid;
+    _bookmarks.clear();
+    await load();
+  }
+
+  Future<void> _migrateLegacyIfNeeded(SharedPreferences prefs) async {
+    final key = _storageKey;
+    if (prefs.getString(key) != null) return;
+    final legacy = prefs.getString(_legacyKey);
+    if (legacy == null || legacy.isEmpty) return;
+    await prefs.setString(key, legacy);
+    await prefs.remove(_legacyKey);
+  }
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final data = prefs.getString(_key);
+    if (_userId != null && _userId!.isNotEmpty) {
+      await _migrateLegacyIfNeeded(prefs);
+    }
 
+    final data = prefs.getString(_storageKey);
     if (data == null) return;
 
     final List decoded = jsonDecode(data);
@@ -27,7 +57,6 @@ class BookmarkManager {
     );
   }
 
-  // ✅ SAVE TO STORAGE
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -49,10 +78,9 @@ class BookmarkManager {
       }).toList(),
     );
 
-    await prefs.setString(_key, data);
+    await prefs.setString(_storageKey, data);
   }
 
-  // ✅ TOGGLE BOOKMARK
   Future<void> toggle(Product product) async {
     if (isBookmarked(product.id)) {
       _bookmarks.removeWhere((p) => p.id == product.id);

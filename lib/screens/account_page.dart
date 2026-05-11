@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 import '../models/models.dart';
 import 'bookmarks_page.dart';
+import 'edit_profile_page.dart';
 
 typedef LogoutCallback = void Function(bool didLogout);
 
@@ -10,12 +11,14 @@ class AccountPage extends StatelessWidget {
   final User user;
   final BookmarkManager bookmarkManager; // NEW
   final LogoutCallback onLogOut;
+  final VoidCallback onProfileUpdated;
 
   const AccountPage({
     super.key,
     required this.user,
     required this.bookmarkManager, // NEW
     required this.onLogOut,
+    required this.onProfileUpdated,
   });
 
   @override
@@ -31,7 +34,16 @@ class AccountPage extends StatelessWidget {
           _buildStatsRow(),
           const SizedBox(height: 24),
           _buildSection('Account', [
-            _menuTile(context, Icons.person_outline, 'Edit Profile', () {}),
+            _menuTile(context, Icons.person_outline, 'Edit Profile', () async {
+              final changed = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      EditProfilePage(initialUsername: user.username),
+                ),
+              );
+              if (context.mounted && changed == true) onProfileUpdated();
+            }),
             _menuTile(context, Icons.credit_card_outlined, 'Payment Methods', () {}),
             _menuTile(context, Icons.location_on_outlined, 'Saved Addresses', () {}),
             // ── NEW: Bookmarks tile ──────────────────
@@ -85,7 +97,7 @@ class AccountPage extends StatelessWidget {
             ],
           ),
           child: Center(
-            child: Text(user.firstName[0].toUpperCase(),
+            child: Text(_profileInitial(user),
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 32,
@@ -93,7 +105,7 @@ class AccountPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Text(user.firstName,
+        Text(user.username,
             style: const TextStyle(
                 color: TechColors.textPrimary,
                 fontSize: 22,
@@ -189,5 +201,13 @@ class AccountPage extends StatelessWidget {
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     );
+  }
+
+  static String _profileInitial(User user) {
+    if (user.username.isNotEmpty) {
+      return user.username[0].toUpperCase();
+    }
+    if (user.email.isNotEmpty) return user.email[0].toUpperCase();
+    return '?';
   }
 }

@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'data/database/db_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fa;
 
 
 import 'constants.dart';
 import 'models/models.dart';
 import 'screens/screens.dart';
 import 'firebase_options.dart';
+import 'utils/shop_category_resolver.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,8 +35,9 @@ class _TechHubAppState extends State<TechHubApp> {
   final _bookmarkManager = BookmarkManager();         // NEW
   final _searchHistory = SearchHistoryManager();
   final _dbRepository = DbRepository();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final _user = mockUser;
+  final fa.FirebaseAuth _auth = fa.FirebaseAuth.instance;
+  late User _user;
+  StreamSubscription<fa.User?>? _authSubscription;
 
   bool _loggedIn = false;
   bool _initialized = false;
@@ -46,11 +50,51 @@ class _TechHubAppState extends State<TechHubApp> {
     });
   }
 
+  void _onAuthStateChanged(fa.User? u) {
+    _bookmarkManager.bindToUser(u?.uid).then((_) {
+      if (!mounted) return;
+      setState(() {
+        if (u != null) {
+          _user = User.fromAuthUser(u);
+        } else {
+          _user = User(
+            id: '',
+            username: '',
+            firstName: '',
+            lastName: '',
+            email: '',
+            role: 'Tech Enthusiast',
+            points: 0,
+            profileImageUrl: 'assets/profile_pics/user_avatar.png',
+          );
+        }
+      });
+    });
+  }
+
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
+
+    final initial = _auth.currentUser;
+    _user = initial != null
+        ? User.fromAuthUser(initial)
+        : User(
+            id: '',
+            username: '',
+            firstName: '',
+            lastName: '',
+            email: '',
+            role: 'Tech Enthusiast',
+            points: 0,
+            profileImageUrl: 'assets/profile_pics/user_avatar.png',
+          );
+
+    _authSubscription = _auth.authStateChanges().listen((u) {
+      _onAuthStateChanged(u);
+    });
 
     _router = GoRouter(
       initialLocation: '/splash',
@@ -67,11 +111,15 @@ class _TechHubAppState extends State<TechHubApp> {
           builder: (_, __) => LoginPage(
             onLogIn: (creds) async {
               await _auth.signInWithEmailAndPassword(
-                email: creds.email, // (or rename to creds.email)
+                email: creds.email.trim(),
                 password: creds.password,
               );
 
-              setState(() => _loggedIn = true);
+              final u = _auth.currentUser;
+              setState(() {
+                _loggedIn = true;
+                if (u != null) _user = User.fromAuthUser(u);
+              });
               _router.go('/explore');
             },
           ),
@@ -106,6 +154,10 @@ class _TechHubAppState extends State<TechHubApp> {
               builder: (_, __) => AccountPage(
                 user: _user,
                 bookmarkManager: _bookmarkManager,   // NEW
+                onProfileUpdated: () {
+                  final u = _auth.currentUser;
+                  if (u != null) setState(() => _user = User.fromAuthUser(u));
+                },
                 onLogOut: (_) async {
                   await _auth.signOut();
                   setState(() => _loggedIn = false);
@@ -120,10 +172,14 @@ class _TechHubAppState extends State<TechHubApp> {
           path: '/store/:id',
           builder: (context, state) {
             final id = state.pathParameters['id']!;
-            final store = techStores.firstWhere(
-                  (s) => s.id == id,
+            final base = techStores.firstWhere(
+              (s) => s.id == id,
               orElse: () => techStores.first,
             );
+            final shop = state.uri.queryParameters['shop'];
+            final store = (shop != null && shop.isNotEmpty)
+                ? ShopCategoryResolver.storeKeepingCategory(base, shop)
+                : base;
             return StorePage(
               store: store,
               cartManager: _cartManager,
@@ -136,14 +192,17 @@ class _TechHubAppState extends State<TechHubApp> {
       ],
 
       redirect: (context, state) {
-        final location = state.matchedLocation;
-        final isGoingToLogin = location == '/login';
-        final isSplash = location == '/splash';
+        final isSplash = state.matchedLocation == '/splash';
+        final isLogin = state.matchedLocation == '/login';
 
-        if (!_initialized) return '/splash';
-        if (!_loggedIn && !isGoingToLogin) return '/login';
-        if (_loggedIn && isGoingToLogin) return '/explore';
-        if (_initialized && isSplash) return _loggedIn ? '/explore' : '/login';
+        final loggedIn = _auth.currentUser != null;
+
+        if (!_initialized) return null; // 🔥 DO NOT BLOCK NAVIGATION
+
+        if (!loggedIn && !isLogin) return '/login';
+        if (loggedIn && isLogin) return '/explore';
+        if (isSplash) return loggedIn ? '/explore' : '/login';
+
         return null;
       },
     );
@@ -157,20 +216,27 @@ class _TechHubAppState extends State<TechHubApp> {
 
     final loggedIn = _auth.currentUser != null;
 
-    await Future.wait([
-      _bookmarkManager.load(),
-      _searchHistory.load(),
-    ]);
+    await _bookmarkManager.bindToUser(_auth.currentUser?.uid);
+    await _searchHistory.load();
 
     if (!mounted) return;
 
     setState(() {
       _loggedIn = loggedIn;
       _initialized = true;
+      final u = _auth.currentUser;
+      if (u != null) _user = User.fromAuthUser(u);
     });
 
     _router.go(loggedIn ? '/explore' : '/login');
   }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(

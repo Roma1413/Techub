@@ -41,7 +41,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
     final review = Review(
       id: '',
       productId: widget.productId,
-      userName: widget.user.firstName,
+      userName: widget.user.username,
       text: text,
       rating: _selectedRating,
       date: DateTime.now(),

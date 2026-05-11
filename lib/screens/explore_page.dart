@@ -4,6 +4,7 @@ import '../components/components.dart';
 import '../constants.dart';
 import '../models/models.dart';
 import '../network/life_hack_service.dart'; // NEW
+import '../utils/shop_category_resolver.dart';
 
 class ExplorePage extends StatefulWidget {
   final CartManager cartManager;
@@ -35,6 +36,8 @@ class _ExplorePageState extends State<ExplorePage> {
   String _searchQuery = '';
   bool _showHistory = false;
   ExploreData? _data;
+  /// `null` = show every product (All).
+  String? _selectedShopCategory;
   LifeHack? _lifeHack;       // NEW
   bool _hackLoading = true;  // NEW
 
@@ -92,21 +95,44 @@ class _ExplorePageState extends State<ExplorePage> {
     });
   }
 
-  List<TechStore> get _filteredStores {
-    final stores = _data?.stores ?? [];
-    if (_searchQuery.isEmpty) return stores;
-    return stores.where((s) =>
-    s.name.toLowerCase().contains(_searchQuery) ||
-        s.category.toLowerCase().contains(_searchQuery) ||
-        s.products.any((p) => p.name.toLowerCase().contains(_searchQuery))
-    ).toList();
+  List<TechStore> get _baseStores => _data?.stores ?? [];
+
+  int get _totalProductCount =>
+      _baseStores.fold<int>(0, (sum, s) => sum + s.products.length);
+
+  List<TechCategory> get _shopCategoriesResolved =>
+      ShopCategoryResolver.categoriesWithCounts(_baseStores);
+
+  /// Category chips filtered by the search box (name match).
+  List<TechCategory> get _shopCategoriesForChips {
+    final list = _shopCategoriesResolved;
+    if (_searchQuery.isEmpty) return list;
+    return list
+        .where((c) => c.name.toLowerCase().contains(_searchQuery))
+        .toList();
   }
 
-  List<TechCategory> get _filteredCategories {
-    final cats = _data?.categories ?? [];
-    if (_searchQuery.isEmpty) return cats;
-    return cats.where((c) =>
-        c.name.toLowerCase().contains(_searchQuery)).toList();
+  List<TechStore> get _storesAfterCategoryFilter {
+    final cat = _selectedShopCategory;
+    if (cat == null) return List<TechStore>.from(_baseStores);
+    return _baseStores
+        .map((s) => ShopCategoryResolver.storeKeepingCategory(s, cat))
+        .where((s) => s.products.isNotEmpty)
+        .toList();
+  }
+
+  List<TechStore> get _filteredStores {
+    final stores = _storesAfterCategoryFilter;
+    if (_searchQuery.isEmpty) return stores;
+    final q = _searchQuery;
+    return stores
+        .where((s) =>
+            s.name.toLowerCase().contains(q) ||
+            s.category.toLowerCase().contains(q) ||
+            s.products.any((p) =>
+                p.name.toLowerCase().contains(q) ||
+                p.description.toLowerCase().contains(q)))
+        .toList();
   }
 
   @override
@@ -130,9 +156,20 @@ class _ExplorePageState extends State<ExplorePage> {
                 SliverToBoxAdapter(child: _buildLifeHackCard()),
               if (_searchQuery.isNotEmpty &&
                   _filteredStores.isEmpty &&
-                  _filteredCategories.isEmpty)
+                  _shopCategoriesForChips.isEmpty)
                 SliverToBoxAdapter(child: _buildNoResults())
               else ...[
+                if (_totalProductCount > 0)
+                  SliverToBoxAdapter(
+                    child: CategorySection(
+                      categories: _shopCategoriesForChips,
+                      totalProductCount: _totalProductCount,
+                      selectedCategoryName: _selectedShopCategory,
+                      onSelectCategory: (name) {
+                        setState(() => _selectedShopCategory = name);
+                      },
+                    ),
+                  ),
                 if (_filteredStores.isNotEmpty)
                   SliverToBoxAdapter(
                     child: StoreSection(
@@ -140,17 +177,13 @@ class _ExplorePageState extends State<ExplorePage> {
                       cartManager: widget.cartManager,
                       orderManager: widget.orderManager,
                       bookmarkManager: widget.bookmarkManager,
+                      shopCategoryFilter: _selectedShopCategory,
                     ),
                   ),
                 if (_searchQuery.isEmpty)
                   SliverToBoxAdapter(
                     child: CommunitySection(
                         posts: _data?.communityPosts ?? []),
-                  ),
-                if (_filteredCategories.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: CategorySection(
-                        categories: _filteredCategories),
                   ),
               ],
             ],

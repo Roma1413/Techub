@@ -101,8 +101,11 @@ class _LoginFormState extends State<_LoginForm>
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
 
   bool _isLoading = false;
+  /// When true, show username and primary action is account creation.
+  bool _creatingAccount = false;
 
   late final AnimationController _controller = AnimationController(
     duration: const Duration(seconds: 3),
@@ -114,6 +117,7 @@ class _LoginFormState extends State<_LoginForm>
     _controller.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -122,6 +126,17 @@ class _LoginFormState extends State<_LoginForm>
         _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all fields")),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateRegister() {
+    if (!_validate()) return false;
+    if (_usernameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose a username')),
       );
       return false;
     }
@@ -155,26 +170,39 @@ class _LoginFormState extends State<_LoginForm>
   }
 
   Future<void> _register() async {
-    if (!_validate()) return;
+    if (!_validateRegister()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      final name = _usernameController.text.trim();
+      await cred.user?.updateDisplayName(name);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created successfully")),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Account created successfully")),
+        );
+      }
+
+      widget.onLogIn(
+        Credentials(
+          _emailController.text,
+          _passwordController.text,
+        ),
       );
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Registration failed")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? "Registration failed")),
+        );
+      }
     }
 
-    setState(() => _isLoading = false);
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -199,9 +227,9 @@ class _LoginFormState extends State<_LoginForm>
 
           const SizedBox(height: 20),
 
-          const Text(
-            "Sign in to TechHub",
-            style: TextStyle(
+          Text(
+            _creatingAccount ? "Create your account" : "Sign in to TechHub",
+            style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
               color: TechColors.textPrimary,
@@ -209,6 +237,17 @@ class _LoginFormState extends State<_LoginForm>
           ),
 
           const SizedBox(height: 30),
+
+          if (_creatingAccount) ...[
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                labelText: "Username",
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 15),
+          ],
 
           TextField(
             controller: _emailController,
@@ -232,19 +271,27 @@ class _LoginFormState extends State<_LoginForm>
           const SizedBox(height: 25),
 
           ElevatedButton(
-            onPressed: _isLoading ? null : _login,
+            onPressed: _isLoading
+                ? null
+                : (_creatingAccount ? _register : _login),
             child: _isLoading
                 ? const CircularProgressIndicator()
-                : const Text("Sign In"),
+                : Text(_creatingAccount ? "Create Account" : "Sign In"),
           ),
 
           const SizedBox(height: 10),
 
           TextButton(
-            onPressed: _isLoading ? null : _register,
-            child: const Text(
-              "Create Account",
-              style: TextStyle(color: TechColors.accent),
+            onPressed: _isLoading
+                ? null
+                : () => setState(() {
+                      _creatingAccount = !_creatingAccount;
+                    }),
+            child: Text(
+              _creatingAccount
+                  ? "Already have an account? Sign in"
+                  : "Create an account",
+              style: const TextStyle(color: TechColors.accent),
             ),
           ),
         ],
