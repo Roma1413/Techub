@@ -9,3 +9,4 @@ export 'bookmark_manager.dart';      // NEW
 export 'search_history_manager.dart'; // NEW
 export 'review.dart';
 export 'review_dao.dart';
+export 'feedback.dart';

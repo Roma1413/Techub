@@ -18,6 +18,22 @@ class ProductItem extends StatefulWidget {
 
 class _ProductItemState extends State<ProductItem> {
   @override
+  void initState() {
+    super.initState();
+    widget.bookmarkManager.addListener(_onBookmarksChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.bookmarkManager.removeListener(_onBookmarksChanged);
+    super.dispose();
+  }
+
+  void _onBookmarksChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -99,10 +115,7 @@ class _ProductItemState extends State<ProductItem> {
               ),
               // ── Bookmark icon ──────────────────────
               GestureDetector(
-                onTap: () async {
-                  await widget.bookmarkManager.toggle(widget.product);
-                  setState(() {});
-                },
+                onTap: () => widget.bookmarkManager.toggle(widget.product),
                 child: Icon(
                   isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                   color: isBookmarked

@@ -4,6 +4,7 @@ import '../constants.dart';
 import '../models/models.dart';
 import 'bookmarks_page.dart';
 import 'edit_profile_page.dart';
+import 'feedback_page.dart';
 
 typedef LogoutCallback = void Function(bool didLogout);
 
@@ -60,6 +61,14 @@ class AccountPage extends StatelessWidget {
           ]),
           const SizedBox(height: 16),
           _buildSection('Support', [
+            _menuTile(context, Icons.feedback_outlined, 'Send Feedback', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FeedbackPage(user: user),
+                ),
+              );
+            }),
             _menuTile(context, Icons.help_outline, 'Help Center', () {}),
             _menuTile(context, Icons.language, 'Visit TechHub Website',
                     () async {

@@ -14,7 +14,7 @@ class LifeHack {
 }
 
 class LifeHackService {
-  static const _apiKey = 'c0ddc6bba8914048b3feade9fdd1bb20'; // ← paste your key
+  static const _apiKey = '89c384bf369643bca8da4f4c301a38f1'; // ← paste your key
   static const _url = 'https://api.apileague.com/retrieve-random-life-hack';
 
   Future<LifeHack?> fetchHack() async {

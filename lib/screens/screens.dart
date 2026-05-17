@@ -6,3 +6,4 @@ export 'login_page.dart';
 export 'myorders_page.dart';
 export 'store_page.dart';
 export 'reviews_page.dart';
+export 'feedback_page.dart';

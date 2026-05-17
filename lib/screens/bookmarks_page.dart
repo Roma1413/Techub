@@ -14,6 +14,22 @@ class BookmarksPage extends StatefulWidget {
 
 class _BookmarksPageState extends State<BookmarksPage> {
   @override
+  void initState() {
+    super.initState();
+    widget.bookmarkManager.addListener(_onBookmarksChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.bookmarkManager.removeListener(_onBookmarksChanged);
+    super.dispose();
+  }
+
+  void _onBookmarksChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bookmarks = widget.bookmarkManager.bookmarks;
 
@@ -62,7 +78,6 @@ class _BookmarksPageState extends State<BookmarksPage> {
             // Delete item
             onDismissed: (_) async {
               await widget.bookmarkManager.toggle(product);
-              setState(() {});
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
